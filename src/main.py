@@ -20,7 +20,7 @@ import random
 from PIL import Image
 import torch
 from torch.autograd import Variable
-import PIL.ImageOps    
+import PIL.ImageOps
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
@@ -31,6 +31,7 @@ from scipy import ndimage
 import scipy.misc
 import torch
 import torchvision
+import itertools
 
 
 kMinSamplesPerPerson = 10
@@ -57,9 +58,9 @@ load_name = 'default'
 def train_loader(path):
 	img = Image.open(path)
 	# if args.aug != "off":
-	#	pix = np.array(img)
-	#	pix_aug = img_augmentation(pix)
-	#	img = Image.fromarray(np.uint8(pix_aug))
+	#   pix = np.array(img)
+	#   pix_aug = img_augmentation(pix)
+	#   img = Image.fromarray(np.uint8(pix_aug))
 	# print pix
 	return img
 
@@ -202,7 +203,12 @@ def validate(test_dataloader, forward_pass, criterion):
 
 def main():
 	global knEpochsCount
+	global classes
 	train_set, test_set, classes = generate_sets(PATH_TO_PHOTOS)
+
+	print(f'Num of classes is {len(classes)}')
+	print(f'Num of train samples is {len(train_set)}')
+	print(f'Num of test samples is {len(test_set)}')
 	
 	train_dataloader = torch.utils.data.DataLoader(
 						ImageList(fileList=train_set,
@@ -225,8 +231,24 @@ def main():
 	if bUseCuda:
 		forward_pass = torchvision.models.alexnet(pretrained=True).cuda()
 	else:
-		forward_pass = torchvision.models.alexnet(num_classes=len(classes))
-		
+		forward_pass = torchvision.models.alexnet(pretrained=True)
+
+
+	for param in forward_pass.parameters():
+		param.requires_grad = False
+
+	# for param in forward_pass.classifier[-3:-1].parameters():
+	#s    param.requires_grad = True
+
+
+	in_features_last = forward_pass.classifier[-1].in_features
+
+	# forward_pass.classifier[-3] = nn.Linear(in_features_prelast, in_features_last)
+	forward_pass.classifier[-1] = nn.Linear(in_features_last, len(classes))
+
+
+
+
 	optimizer = optim.Adam(forward_pass.parameters(), lr=learning_rate)
 	
 	criterion = nn.LogSoftmax()# TBD change criterion!!
@@ -238,7 +260,9 @@ def main():
 	validate_plot = "p1b_validate.txt"
 	if load_name != "default":
 		knEpochsCount = 1
-	for epoch in range(knStartEpoch, knEpochsCount):
+
+
+	for epoch in range(knStartEpoch, knStartEpoch + knEpochsCount):
 
 		adjust_learning_rate(optimizer, epoch)
 

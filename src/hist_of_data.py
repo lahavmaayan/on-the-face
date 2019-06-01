@@ -25,7 +25,7 @@ def present_plot(details):
 
 if __name__ == "__main__":
     # Change Path for you
-    PATH = "../../Downloads/test"
+    PATH = "../data/train"
     dir_params = (calc_number_of_files_per_category(PATH))
     details = dict()
     list_details = []

@@ -34,8 +34,8 @@ import torchvision
 import itertools
 
 
-kMinSamplesPerPerson = 10
-kTrainSamplesCount = 8
+kMinSamplesPerPerson = 400
+kTrainSamplesCount = 300
 
 kBatchSizeTrain = 40
 kBatchSizeTest = 40
@@ -45,7 +45,7 @@ bUseCuda = False
 learning_rate = 0.01
 
 save_path = './state_'
-PATH_TO_PHOTOS = "/Users/maayan/Documents/onTheFace/pictures"
+PATH_TO_PHOTOS = "../data/train"
 
 knEpochsCount = 1
 knStartEpoch = 0
@@ -114,6 +114,8 @@ def generate_sets(dir_path):
 		
 		if len(file_list) >= kMinSamplesPerPerson:
 
+            
+            
 			classes.append(d)
 			class_idx = len(classes) - 1
 			file_list_permute = np.random.permutation(file_list)
@@ -122,13 +124,16 @@ def generate_sets(dir_path):
 
 			test_set += [(os.path.join(subdir_path, f), class_idx) for f in
 						 file_list_permute[kTrainSamplesCount:]]
-
+            
+        if len(classes) == 100:
+            break
+            
 	return train_set, test_set, classes
 
 
 def adjust_learning_rate(optimizer, epoch):
 	"""Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-	lr = 0.01 * (0.1 ** (epoch // 3))
+	lr = 0.1 * (0.1 ** (epoch // 3))
 	for param_group in optimizer.param_groups:
 		param_group['lr'] = lr
 
